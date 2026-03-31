@@ -2,7 +2,8 @@ package main
 
 import (
 	"log"
-	"siul-pbj-api/config"
+
+	"siul-pbj-api/pkg/config"
 	"siul-pbj-api/routes"
 
 	"github.com/gin-contrib/cors"
@@ -22,8 +23,8 @@ func main() {
 	configCORS.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	r.Use(cors.New(configCORS))
 
-	// Register Routes
-	routes.SetupRoutes(r)
+	// Register Routes (inject DB)
+	routes.SetupRoutes(r, config.DB)
 
 	// Start Server
 	log.Println("Server running on port 8080")

@@ -3,105 +3,126 @@ package routes
 import (
 	"net/http"
 
-	"siul-pbj-api/controllers"
-	"siul-pbj-api/middlewares"
+	"siul-pbj-api/internal/auth"
+	"siul-pbj-api/internal/middleware"
+	"siul-pbj-api/internal/pep"
+	"siul-pbj-api/internal/pp"
+	"siul-pbj-api/internal/ppkom"
+	"siul-pbj-api/internal/pptk"
+	"siul-pbj-api/internal/public"
+	"siul-pbj-api/pkg/response"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-// SetupRoutes configures all the routes for the application
-func SetupRoutes(r *gin.Engine) {
+// SetupRoutes configures all routes with dependency-injected handlers
+func SetupRoutes(r *gin.Engine, db *gorm.DB) {
+	// Initialize handlers
+	authHandler := auth.NewHandler(db)
+	publicHandler := public.NewHandler(db)
+	pepHandler := pep.NewHandler(db)
+	pptkHandler := pptk.NewHandler(db)
+	ppkomHandler := ppkom.NewHandler(db)
+	ppHandler := pp.NewHandler(db)
+
 	// Base API Group
 	v1 := r.Group("/api/v1")
+
+	// Serve Static Files for Uploads
+	r.Static("/uploads", "./uploads")
 
 	// ==========================================
 	// 1. PUBLIC ROUTES (No Auth Required)
 	// ==========================================
-	public := v1.Group("/")
+	pub := v1.Group("/")
 	{
-		public.POST("/usulan", controllers.SubmitUsulan)
-		public.GET("/usulan/:nomor_tiket", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"success": true, "message": "Detail usulan", "data": gin.H{"nomor_tiket": c.Param("nomor_tiket")}})
-		})
-		public.GET("/kategori-belanja", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"success": true, "message": "List kategori", "data": []interface{}{}})
-		})
-		public.GET("/master-barang", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"success": true, "message": "List master barang", "data": []interface{}{}})
-		})
+		pub.POST("/usulan", publicHandler.SubmitUsulan)
+		pub.GET("/usulan", publicHandler.GetUsulanPublikList)
+		pub.GET("/usulan/:nomor_tiket", publicHandler.GetDetailUsulanPublik)
+		pub.GET("/kategori-belanja", publicHandler.GetMasterKategori)
+		pub.GET("/master-barang", publicHandler.GetMasterBarang)
 	}
 
-
-	auth := v1.Group("/auth")
+	// ==========================================
+	// 2. AUTH ROUTES
+	// ==========================================
+	authGroup := v1.Group("/auth")
 	{
-		auth.POST("/login", controllers.Login)
-		// Using real AuthGuard
-		auth.POST("/logout", middlewares.AuthGuard(), func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"success": true, "message": "Logged out successfully"})
+		authGroup.POST("/login", authHandler.Login)
+		authGroup.POST("/logout", middleware.AuthGuard(), func(c *gin.Context) {
+			response.Success(c, "Logged out successfully", nil)
 		})
-		auth.GET("/me", middlewares.AuthGuard(), func(c *gin.Context) {
-			// Now grabbing from JWT claims set by middleware
+		authGroup.GET("/me", middleware.AuthGuard(), func(c *gin.Context) {
 			userId, _ := c.Get("user_id")
 			username, _ := c.Get("username")
 			role, _ := c.Get("role")
-			c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{"id": userId, "username": username, "role": role}})
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    gin.H{"id": userId, "username": username, "role": role},
+			})
 		})
 	}
 
 	// ==========================================
 	// 3. PEP ROUTES (Role: PEP)
 	// ==========================================
-	pep := v1.Group("/pep")
-	pep.Use(middlewares.AuthGuard(), middlewares.RoleGuard("pep"))
+	pepGroup := v1.Group("/pep")
+	pepGroup.Use(middleware.AuthGuard(), middleware.RoleGuard("pep"))
 	{
-		pep.GET("/usulan", controllers.GetUsulanMasuk)
-		pep.GET("/usulan/:id", dummyHandler("Detail usulan PEP"))
-		pep.POST("/usulan/:id/disposisi", controllers.DisposisiKePPTK)
-		pep.PUT("/usulan/:id/anggaran", dummyHandler("Geser Anggaran oleh PEP"))
+		pepGroup.GET("/usulan", pepHandler.GetUsulanMasuk)
+		pepGroup.GET("/usulan/:id", dummyHandler("Detail usulan PEP"))
+		pepGroup.GET("/usulan/detail-anggaran", pepHandler.GetDetailAnggaran)
+		pepGroup.POST("/usulan/:id/disposisi", pepHandler.DisposisiKePPTK)
+		pepGroup.PUT("/usulan/:id/detail_anggaran", dummyHandler("Kelola Detail Anggaran oleh PEP"))
 
 		// Master Data
-		master := pep.Group("/master")
-		master.GET("/kategori-belanja", dummyHandler("List Master Kategori"))
-		master.GET("/users/pptk", controllers.GetPPTKUsers)
+		master := pepGroup.Group("/master")
+		master.GET("/kategori-belanja", publicHandler.GetMasterKategori)
+		master.GET("/nama-barang", publicHandler.GetMasterBarang)
+		master.GET("/users/all", pepHandler.GetAllUsers)
+		master.GET("/users/pptk", pepHandler.GetPPTKUsers)
 		master.PUT("/users/:id/kewenangan", dummyHandler("Edit Kewenangan User"))
 	}
 
 	// ==========================================
 	// 4. PPTK ROUTES (Role: PPTK)
 	// ==========================================
-	pptk := v1.Group("/pptk")
-	pptk.Use(middlewares.AuthGuard(), middlewares.RoleGuard("pptk"))
+	pptkGroup := v1.Group("/pptk")
+	pptkGroup.Use(middleware.AuthGuard(), middleware.RoleGuard("pptk"))
 	{
-		pptk.GET("/usulan", controllers.GetUsulanPPTK)
-		pptk.POST("/usulan/:id/disposisi", controllers.DisposisiKePPKOM)
-		pptk.POST("/usulan/:id/return", controllers.ReturnKePEP)
+		pptkGroup.GET("/usulan", pptkHandler.GetUsulanPPTK)
+		pptkGroup.POST("/usulan/:id/disposisi", pptkHandler.DisposisiKePPKOM)
+		pptkGroup.POST("/usulan/:id/return", pptkHandler.ReturnKePEP)
+		pptkGroup.GET("/users/ppkom", pptkHandler.GetPPKOMUsers)
 	}
 
 	// ==========================================
 	// 5. PPKOM ROUTES (Role: PPKOM)
 	// ==========================================
-	ppkom := v1.Group("/ppkom")
-	ppkom.Use(middlewares.AuthGuard(), middlewares.RoleGuard("ppkom"))
+	ppkomGroup := v1.Group("/ppkom")
+	ppkomGroup.Use(middleware.AuthGuard(), middleware.RoleGuard("ppkom"))
 	{
-		ppkom.GET("/usulan", controllers.GetUsulanPPKOM)
-		ppkom.POST("/usulan/:id/setujui", controllers.SetujuiDanDisposisiKePP)
-		ppkom.POST("/usulan/:id/tolak", controllers.TolakDanKembalikanKePPTK)
+		ppkomGroup.GET("/usulan", ppkomHandler.GetUsulanPPKOM)
+		ppkomGroup.POST("/usulan/:id/setujui", ppkomHandler.SetujuiDanDisposisiKePP)
+		ppkomGroup.POST("/usulan/:id/tolak", ppkomHandler.TolakDanKembalikanKePPTK)
+		ppkomGroup.GET("/users/pp", ppkomHandler.GetPPUsers)
 	}
 
 	// ==========================================
 	// 6. PP ROUTES (Role: PP)
 	// ==========================================
-	pp := v1.Group("/pp")
-	pp.Use(middlewares.AuthGuard(), middlewares.RoleGuard("pp"))
+	ppGroup := v1.Group("/pp")
+	ppGroup.Use(middleware.AuthGuard(), middleware.RoleGuard("pp"))
 	{
-		pp.GET("/usulan", controllers.GetUsulanPP)
-		pp.POST("/usulan/:id/realisasi", controllers.RealisasiUsulan)
+		ppGroup.GET("/usulan", ppHandler.GetUsulanPP)
+		ppGroup.POST("/usulan/:id/realisasi", ppHandler.RealisasiUsulan)
 	}
 }
 
-// Dummy handlers
+// Dummy handlers for unimplemented endpoints
 func dummyHandler(msg string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"success": true, "message": msg, "data": gin.H{"id": c.Param("id")}})
+		response.Success(c, msg, gin.H{"id": c.Param("id")})
 	}
 }

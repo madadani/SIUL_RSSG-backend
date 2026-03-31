@@ -1,4 +1,4 @@
-package controllers
+package auth
 
 import (
 	"log"
@@ -6,46 +6,45 @@ import (
 	"os"
 	"time"
 
-	"siul-pbj-api/config"
-	"siul-pbj-api/models"
+	"siul-pbj-api/internal/domain"
+	"siul-pbj-api/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
+
+// Handler holds dependencies for auth endpoints
+type Handler struct {
+	DB *gorm.DB
+}
+
+func NewHandler(db *gorm.DB) *Handler {
+	return &Handler{DB: db}
+}
 
 type LoginRequest struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-func Login(c *gin.Context) {
+func (h *Handler) Login(c *gin.Context) {
 	var input LoginRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "Validasi gagal, pastikan username dan password terisi",
-		})
+		response.BadRequest(c, "Validasi gagal, pastikan username dan password terisi")
 		return
 	}
 
-	var user models.User
-	// Fetch user from DB
-	result := config.DB.Where("username = ?", input.Username).First(&user)
+	var user domain.User
+	result := h.DB.Where("username = ?", input.Username).First(&user)
 	if result.Error != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Username atau password salah",
-		})
+		response.Unauthorized(c, "Username atau password salah")
 		return
 	}
 
-	// NOTE: In production you MUST use bcrypt to compare password!
-	// For testing with raw SQL DBeaver directly we just use plain text or dummy hash match.
-	if input.Password != user.PasswordHash { // TODO: Replace with bcrypt.CompareHashAndPassword
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Username atau password salah",
-		})
+	// TODO: Replace with bcrypt.CompareHashAndPassword in production
+	if input.Password != user.PasswordHash {
+		response.Unauthorized(c, "Username atau password salah")
 		return
 	}
 
@@ -54,7 +53,7 @@ func Login(c *gin.Context) {
 		"id":       user.ID,
 		"username": user.Username,
 		"role":     user.Role,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(), // 1 day expiry
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	})
 
 	jwtSecret := os.Getenv("JWT_SECRET")
@@ -65,10 +64,7 @@ func Login(c *gin.Context) {
 	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
 		log.Println("JWT Generate Error:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "Gagal men-generate token auth",
-		})
+		response.InternalError(c, "Gagal men-generate token auth")
 		return
 	}
 

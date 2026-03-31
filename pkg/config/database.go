@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"siul-pbj-api/models"
+
+	"siul-pbj-api/internal/domain"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -34,16 +35,18 @@ func ConnectDB() {
 	}
 
 	log.Println("Berhasil terhubung ke database PostgreSQL (siul_db) via GORM")
-	
+
 	// Auto Migrate (Update Schema)
 	db.AutoMigrate(
-		&models.User{}, 
-		&models.KategoriBelanja{}, 
-		&models.Usulan{}, 
-		&models.RiwayatUsulan{}, 
-		&models.KewenanganPegawai{},
-		&models.RealisasiLaporan{},
+		&domain.User{},
+		&domain.KategoriBelanja{},
+		&domain.MasterRincianBelanja{},
+		&domain.DetailAnggaran{},
+		&domain.Usulan{},
+		&domain.RiwayatUsulan{},
+		&domain.KewenanganPegawai{},
+		&domain.RealisasiLaporan{},
 	)
-	
+
 	DB = db
 }
