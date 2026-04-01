@@ -14,11 +14,12 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{DB: db}
 }
 
-func (r *Repository) FindUsulanPP() ([]domain.Usulan, error) {
+func (r *Repository) FindUsulanPP(userID uint) ([]domain.Usulan, error) {
 	var list []domain.Usulan
 	err := r.DB.
 		Preload("KategoriBelanja").
 		Where("status_kode IN (?)", []string{"DIDISPOSISI_PP", "REALISASI_SELESAI"}).
+		Where("pp_user_id = ?", userID).
 		Order("created_at desc").
 		Find(&list).Error
 	return list, err

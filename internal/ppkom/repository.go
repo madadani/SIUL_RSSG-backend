@@ -14,9 +14,13 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{DB: db}
 }
 
-func (r *Repository) FindUsulanPPKOM() ([]domain.Usulan, error) {
+func (r *Repository) FindUsulanPPKOM(userID uint) ([]domain.Usulan, error) {
 	var list []domain.Usulan
-	err := r.DB.Preload("KategoriBelanja").Where("status_kode = ?", "DIDISPOSISI_PPKOM").Order("created_at desc").Find(&list).Error
+	err := r.DB.Preload("KategoriBelanja").
+		Where("status_kode = ?", "DIDISPOSISI_PPKOM").
+		Where("ppkom_user_id = ?", userID).
+		Order("created_at desc").
+		Find(&list).Error
 	return list, err
 }
 
@@ -41,6 +45,6 @@ func (r *Repository) UpdateUsulanAndCreateHistory(usulan *domain.Usulan, history
 
 func (r *Repository) FindPPUsers() ([]domain.User, error) {
 	var users []domain.User
-	err := r.DB.Where("role = ?", "PP").Find(&users).Error
+	err := r.DB.Where("role = ?", "pp").Find(&users).Error
 	return users, err
 }

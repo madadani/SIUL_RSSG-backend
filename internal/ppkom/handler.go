@@ -27,7 +27,10 @@ type TolakRequest struct {
 }
 
 func (h *Handler) GetUsulanPPKOM(c *gin.Context) {
-	list, err := h.UC.GetUsulanPPKOM()
+	userIdStr, _ := c.Get("user_id")
+	userID := uint(userIdStr.(float64))
+
+	list, err := h.UC.GetUsulanPPKOM(userID)
 	if err != nil {
 		response.InternalError(c, "Gagal memuat usulan PPKOM")
 		return

@@ -15,8 +15,8 @@ func NewUsecase(repo *Repository) *Usecase {
 	return &Usecase{Repo: repo}
 }
 
-func (u *Usecase) GetUsulanPPKOM() ([]domain.Usulan, error) {
-	return u.Repo.FindUsulanPPKOM()
+func (u *Usecase) GetUsulanPPKOM(userID uint) ([]domain.Usulan, error) {
+	return u.Repo.FindUsulanPPKOM(userID)
 }
 
 func (u *Usecase) SetujuiDanDisposisiKePP(id string, ppUserID uint, catatan string, actorID uint) error {

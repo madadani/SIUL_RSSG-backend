@@ -25,7 +25,10 @@ type RealisasiRequest struct {
 }
 
 func (h *Handler) GetUsulanPP(c *gin.Context) {
-	list, err := h.UC.GetUsulanPP()
+	userIdStr, _ := c.Get("user_id")
+	userID := uint(userIdStr.(float64))
+
+	list, err := h.UC.GetUsulanPP(userID)
 	if err != nil {
 		response.InternalError(c, "Gagal memuat usulan PP")
 		return

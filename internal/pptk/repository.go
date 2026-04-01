@@ -46,6 +46,6 @@ func (r *Repository) UpdateUsulanAndCreateHistory(usulan *domain.Usulan, history
 
 func (r *Repository) FindPPKOMUsers() ([]domain.User, error) {
 	var users []domain.User
-	err := r.DB.Where("role = ?", "PPKOM").Find(&users).Error
+	err := r.DB.Where("role = ?", "ppkom").Find(&users).Error
 	return users, err
 }

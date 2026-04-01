@@ -14,8 +14,8 @@ func NewUsecase(repo *Repository) *Usecase {
 	return &Usecase{Repo: repo}
 }
 
-func (u *Usecase) GetUsulanPP() ([]domain.Usulan, error) {
-	return u.Repo.FindUsulanPP()
+func (u *Usecase) GetUsulanPP(userID uint) ([]domain.Usulan, error) {
+	return u.Repo.FindUsulanPP(userID)
 }
 
 func (u *Usecase) RealisasiUsulan(id string, namaVendor string, nomorKontrak string, hargaFinal float64, catatan string, actorID uint) error {
