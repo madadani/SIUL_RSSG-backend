@@ -70,6 +70,19 @@ func (h *Handler) ReturnKePEP(c *gin.Context) {
 	}
 	response.Success(c, "Usulan dikembalikan ke PEP", nil)
 }
+
+func (h *Handler) AcknowledgeReturn(c *gin.Context) {
+	id := c.Param("id")
+	actorIdStr, _ := c.Get("user_id")
+	actorID := uint(actorIdStr.(float64))
+
+	if err := h.UC.AcknowledgeReturn(id, actorID); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.Success(c, "Usulan return berhasil diketahui", nil)
+}
  
 func (h *Handler) GetPPKOMUsers(c *gin.Context) {
 	users, err := h.UC.GetPPKOMUsers()

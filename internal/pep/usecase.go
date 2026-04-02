@@ -48,6 +48,30 @@ func (u *Usecase) DisposisiKePPTK(id string, pptkUserID uint, catatan string, ac
 	return u.Repo.UpdateUsulanAndCreateHistory(usulan, history)
 }
 
+func (u *Usecase) AcknowledgeReturn(id string, actorID uint) error {
+	usulan, err := u.Repo.FindUsulanByID(id)
+	if err != nil {
+		return fmt.Errorf("usulan tidak ditemukan")
+	}
+
+	if usulan.StatusKode != "DIKEMBALIKAN_KE_PEP" {
+		return fmt.Errorf("hanya usulan yang dikembalikan yang bisa diketahui")
+	}
+
+	usulan.IsReturnDiketahui = true
+
+	statusAwal := "DIKEMBALIKAN_KE_PEP"
+	history := &domain.RiwayatUsulan{
+		UsulanID:      usulan.ID,
+		ActorID:       &actorID,
+		StatusAwal:    &statusAwal,
+		StatusAkhir:   "DIKEMBALIKAN_KE_PEP",
+		CatatanAlasan: "Admin PEP telah mengetahui pengembalian usulan",
+	}
+
+	return u.Repo.UpdateUsulanAndCreateHistory(usulan, history)
+}
+
 func (u *Usecase) GetPPTKUsers() ([]domain.User, error) {
 	return u.Repo.FindPPTKUsers()
 }

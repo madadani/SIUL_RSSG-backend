@@ -39,7 +39,7 @@ func (u *Usecase) MatchKategori(namaUsulan string) uint {
 	return kategoriID
 }
 
-// SaveUploadedFile handles optional file upload and returns the saved path
+// SaveUploadedFile handles optional file upload and returns the saved filename
 func (u *Usecase) SaveUploadedFile(c *gin.Context, fieldName string) string {
 	file, err := c.FormFile(fieldName)
 	if err != nil {
@@ -48,7 +48,7 @@ func (u *Usecase) SaveUploadedFile(c *gin.Context, fieldName string) string {
 	filename := fmt.Sprintf("%d-%s", time.Now().UnixNano(), filepath.Base(file.Filename))
 	uploadPath := "./uploads/" + filename
 	if err := c.SaveUploadedFile(file, uploadPath); err == nil {
-		return "/uploads/" + filename
+		return filename
 	}
 	return ""
 }
@@ -93,7 +93,7 @@ func (u *Usecase) GetAllMasterBarang() ([]domain.MasterRincianBelanja, error) {
 // GetUsulanByTiket fetches a single usulan by ticket code with its history
 func (u *Usecase) GetUsulanByTiket(nomorTiket string) (*domain.Usulan, []domain.RiwayatUsulan, error) {
 	var usulan domain.Usulan
-	if err := u.DB.Preload("KategoriBelanja").Where("kode_tiket = ?", nomorTiket).First(&usulan).Error; err != nil {
+	if err := u.DB.Preload("KategoriBelanja").Preload("PPTKUser").Preload("PPKOMUser").Preload("PPUser").Where("kode_tiket = ?", nomorTiket).First(&usulan).Error; err != nil {
 		return nil, nil, err
 	}
 
@@ -116,7 +116,7 @@ func (u *Usecase) GetUsulanPaginated(search string, page, limit int) ([]domain.U
 
 	offset := (page - 1) * limit
 	var usulanList []domain.Usulan
-	err := query.Preload("KategoriBelanja").Order("created_at desc").Offset(offset).Limit(limit).Find(&usulanList).Error
+	err := query.Preload("KategoriBelanja").Preload("PPTKUser").Preload("PPKOMUser").Preload("PPUser").Order("created_at desc").Offset(offset).Limit(limit).Find(&usulanList).Error
 
 	return usulanList, total, err
 }

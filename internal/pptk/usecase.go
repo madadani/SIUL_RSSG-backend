@@ -65,6 +65,30 @@ func (u *Usecase) ReturnKePEP(id string, alasan string, actorID uint) error {
 	return u.Repo.UpdateUsulanAndCreateHistory(usulan, history)
 }
 
+func (u *Usecase) AcknowledgeReturn(id string, actorID uint) error {
+	usulan, err := u.Repo.FindUsulanByID(id)
+	if err != nil {
+		return fmt.Errorf("usulan tidak ditemukan")
+	}
+
+	if usulan.StatusKode != "DIKEMBALIKAN_KE_PPTK" {
+		return fmt.Errorf("hanya usulan yang dikembalikan yang bisa diketahui")
+	}
+
+	usulan.IsReturnDiketahui = true
+
+	statusAwal := "DIKEMBALIKAN_KE_PPTK"
+	history := &domain.RiwayatUsulan{
+		UsulanID:      usulan.ID,
+		ActorID:       &actorID,
+		StatusAwal:    &statusAwal,
+		StatusAkhir:   "DIKEMBALIKAN_KE_PPTK",
+		CatatanAlasan: "PPTK telah mengetahui pengembalian usulan",
+	}
+
+	return u.Repo.UpdateUsulanAndCreateHistory(usulan, history)
+}
+
 func (u *Usecase) GetPPKOMUsers() ([]domain.User, error) {
 	return u.Repo.FindPPKOMUsers()
 }

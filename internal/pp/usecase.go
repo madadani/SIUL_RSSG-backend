@@ -18,7 +18,7 @@ func (u *Usecase) GetUsulanPP(userID uint) ([]domain.Usulan, error) {
 	return u.Repo.FindUsulanPP(userID)
 }
 
-func (u *Usecase) RealisasiUsulan(id string, namaVendor string, nomorKontrak string, hargaFinal float64, catatan string, actorID uint) error {
+func (u *Usecase) RealisasiUsulan(id string, namaVendor string, nomorKontrak string, hargaFinal float64, kategoriId *uint, catatan string, actorID uint) error {
 	usulan, err := u.Repo.FindUsulanByID(id)
 	if err != nil {
 		return fmt.Errorf("usulan tidak ditemukan")
@@ -28,6 +28,9 @@ func (u *Usecase) RealisasiUsulan(id string, namaVendor string, nomorKontrak str
 	}
 
 	usulan.StatusKode = "REALISASI_SELESAI"
+	if kategoriId != nil && *kategoriId > 0 {
+		usulan.KategoriBelanjaID = *kategoriId
+	}
 
 	realisasi := &domain.RealisasiLaporan{
 		UsulanID:     usulan.ID,

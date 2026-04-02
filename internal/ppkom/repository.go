@@ -16,7 +16,7 @@ func NewRepository(db *gorm.DB) *Repository {
 
 func (r *Repository) FindUsulanPPKOM(userID uint) ([]domain.Usulan, error) {
 	var list []domain.Usulan
-	err := r.DB.Preload("KategoriBelanja").
+	err := r.DB.Preload("KategoriBelanja").Preload("PPTKUser").Preload("PPKOMUser").Preload("PPUser").
 		Where("status_kode = ?", "DIDISPOSISI_PPKOM").
 		Where("ppkom_user_id = ?", userID).
 		Order("created_at desc").
@@ -26,7 +26,7 @@ func (r *Repository) FindUsulanPPKOM(userID uint) ([]domain.Usulan, error) {
 
 func (r *Repository) FindUsulanByID(id string) (*domain.Usulan, error) {
 	var usulan domain.Usulan
-	err := r.DB.First(&usulan, id).Error
+	err := r.DB.Preload("KategoriBelanja").Preload("PPTKUser").Preload("PPKOMUser").Preload("PPUser").First(&usulan, id).Error
 	return &usulan, err
 }
 

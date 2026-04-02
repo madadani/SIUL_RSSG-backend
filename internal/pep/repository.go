@@ -17,13 +17,13 @@ func NewRepository(db *gorm.DB) *Repository {
 
 func (r *Repository) FindAllUsulan() ([]domain.Usulan, error) {
 	var list []domain.Usulan
-	err := r.DB.Preload("KategoriBelanja").Order("created_at desc").Find(&list).Error
+	err := r.DB.Preload("KategoriBelanja").Preload("PPTKUser").Preload("PPKOMUser").Preload("PPUser").Order("created_at desc").Find(&list).Error
 	return list, err
 }
 
 func (r *Repository) FindUsulanByID(id string) (*domain.Usulan, error) {
 	var usulan domain.Usulan
-	err := r.DB.First(&usulan, id).Error
+	err := r.DB.Preload("KategoriBelanja").Preload("PPTKUser").Preload("PPKOMUser").Preload("PPUser").First(&usulan, id).Error
 	return &usulan, err
 }
 

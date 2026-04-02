@@ -28,6 +28,7 @@ type Usulan struct {
 	DisposisiPPTKAt    *time.Time      `json:"disposisi_pptk_at"`
 	AlasanReturn       string          `gorm:"type:text" json:"alasan_return"`
 	ReturnAt           *time.Time      `json:"return_at"`
+	IsReturnDiketahui  bool            `gorm:"default:false" json:"is_return_diketahui"`
 	
 	CatatanPPKOM       string          `gorm:"type:text" json:"catatan_ppkom"`
 	SetujuPPKOMAt      *time.Time      `json:"setuju_ppkom_at"`

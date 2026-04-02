@@ -74,12 +74,20 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		pepGroup.GET("/usulan/:id", dummyHandler("Detail usulan PEP"))
 		pepGroup.GET("/usulan/detail-anggaran", pepHandler.GetDetailAnggaran)
 		pepGroup.POST("/usulan/:id/disposisi", pepHandler.DisposisiKePPTK)
+		pepGroup.POST("/usulan/:id/diketahui", pepHandler.AcknowledgeReturn)
 		pepGroup.PUT("/usulan/:id/detail_anggaran", dummyHandler("Kelola Detail Anggaran oleh PEP"))
 
 		// Master Data
 		master := pepGroup.Group("/master")
 		master.GET("/kategori-belanja", publicHandler.GetMasterKategori)
+		master.POST("/kategori-belanja", pepHandler.CreateKategori)
+		master.PUT("/kategori-belanja/:id", pepHandler.UpdateKategori)
+		master.DELETE("/kategori-belanja/:id", pepHandler.DeleteKategori)
+
 		master.GET("/nama-barang", publicHandler.GetMasterBarang)
+		master.POST("/nama-barang", pepHandler.CreateBarang)
+		master.PUT("/nama-barang/:id", pepHandler.UpdateBarang)
+		master.DELETE("/nama-barang/:id", pepHandler.DeleteBarang)
 		master.GET("/users/all", pepHandler.GetAllUsers)
 		master.GET("/users/pptk", pepHandler.GetPPTKUsers)
 		master.PUT("/users/:id/kewenangan", dummyHandler("Edit Kewenangan User"))
@@ -94,6 +102,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		pptkGroup.GET("/usulan", pptkHandler.GetUsulanPPTK)
 		pptkGroup.POST("/usulan/:id/disposisi", pptkHandler.DisposisiKePPKOM)
 		pptkGroup.POST("/usulan/:id/return", pptkHandler.ReturnKePEP)
+		pptkGroup.POST("/usulan/:id/diketahui", pptkHandler.AcknowledgeReturn)
 		pptkGroup.GET("/users/ppkom", pptkHandler.GetPPKOMUsers)
 	}
 

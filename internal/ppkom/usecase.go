@@ -51,7 +51,7 @@ func (u *Usecase) TolakDanKembalikanKePPTK(id string, alasan string, actorID uin
 		return fmt.Errorf("usulan tidak ditemukan")
 	}
 
-	usulan.StatusKode = "DIDISPOSISI_PPTK"
+	usulan.StatusKode = "DIKEMBALIKAN_KE_PPTK"
 	usulan.AlasanTolak = alasan
 	now := time.Now()
 	usulan.RejectAt = &now
@@ -61,7 +61,7 @@ func (u *Usecase) TolakDanKembalikanKePPTK(id string, alasan string, actorID uin
 		UsulanID:      usulan.ID,
 		ActorID:       &actorID,
 		StatusAwal:    &statusAwal,
-		StatusAkhir:   "DIDISPOSISI_PPTK",
+		StatusAkhir:   "DIKEMBALIKAN_KE_PPTK",
 		CatatanAlasan: fmt.Sprintf("Ditolak/Dikembalikan oleh PPKOM karena: %s", alasan),
 	}
 	return u.Repo.UpdateUsulanAndCreateHistory(usulan, history)

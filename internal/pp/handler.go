@@ -21,6 +21,7 @@ type RealisasiRequest struct {
 	NamaVendor   string  `json:"nama_vendor" binding:"required"`
 	NomorKontrak string  `json:"nomor_kontrak"`
 	HargaFinal   float64 `json:"harga_final" binding:"required"`
+	KategoriId   *uint   `json:"kategori_id"`
 	Catatan      string  `json:"catatan"`
 }
 
@@ -47,7 +48,7 @@ func (h *Handler) RealisasiUsulan(c *gin.Context) {
 	actorIdStr, _ := c.Get("user_id")
 	actorID := uint(actorIdStr.(float64))
 
-	if err := h.UC.RealisasiUsulan(id, input.NamaVendor, input.NomorKontrak, input.HargaFinal, input.Catatan, actorID); err != nil {
+	if err := h.UC.RealisasiUsulan(id, input.NamaVendor, input.NomorKontrak, input.HargaFinal, input.KategoriId, input.Catatan, actorID); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
