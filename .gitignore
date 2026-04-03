@@ -1,0 +1,19 @@
+# Golang
+bin
+/tmp
+/out
+
+# Environment variables
+.env
+.env.local
+
+# Database-specific
+# Kita TIDAK meng-ignore folder database/ karena berisi skema untuk kolaborator.
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Go Vendor or Binary
+/vendor
+/siul-pbj-api
